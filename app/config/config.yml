@@ -1,0 +1,6 @@
+postgres:
+  host: postgres
+  port: 5432
+  user: postgres
+  password: "kAHmh9g37h6n7rLQU"
+  db: go-pg-nats

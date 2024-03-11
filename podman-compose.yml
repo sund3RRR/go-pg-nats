@@ -1,0 +1,42 @@
+version: "3.8"
+services:
+  postgres:
+    image: postgres:16.1
+    restart: always
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: kAHmh9g37h6n7rLQU
+      POSTGRES_DB: go-pg-nats
+    ports:
+      - "5432:5432"
+    volumes:
+      - ./pgdata/:/var/lib/postgresql/data
+
+  nats-streaming:
+    image: nats-streaming:0.25.6-alpine3.18
+    restart: always
+    ports:
+      - "4222:4222"
+      - "8222:8222"
+
+  app:
+    build:
+      context: app
+      dockerfile: Dockerfile
+    restart: always
+    entrypoint: /app/server
+    depends_on:
+      - postgres
+    volumes:
+      - ./app/config/config.yml:/app/config/config.yml
+  # server-debug:
+  #   build:
+  #     context: ./app
+  #     dockerfile: Dockerfile.debug
+  #   restart: always
+  #   ports:
+  #     - "4000:4000"
+  #   depends_on:
+  #     - postgres
+  #   volumes:
+  #     - ./app/config/config.yml:/app/config/config.yml

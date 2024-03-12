@@ -4,3 +4,9 @@ postgres:
   user: postgres
   password: "kAHmh9g37h6n7rLQU"
   db: go-pg-nats
+nats-streaming:
+  host: nats-streaming
+  port: 4222
+  cluster: test-cluster
+  client: server-client
+  channel: order 

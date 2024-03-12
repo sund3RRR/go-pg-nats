@@ -18,15 +18,20 @@ services:
     ports:
       - "4222:4222"
       - "8222:8222"
+    environment:
+      - STAN_FILE_STORE_PATH=/datastore
+    volumes:
+      - ./nats-datastore:/datastore
 
   app:
     build:
       context: app
       dockerfile: Dockerfile
-    restart: always
+    restart: "no"
     entrypoint: /app/server
     depends_on:
       - postgres
+      - nats-streaming
     volumes:
       - ./app/config/config.yml:/app/config/config.yml
   # server-debug:

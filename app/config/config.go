@@ -16,6 +16,13 @@ type AppConfig struct {
 		Password string `yaml:"password"`
 		Database string `yaml:"db"`
 	} `yaml:"postgres"`
+	NatsStreaming struct {
+		Host    string `yaml:"host"`
+		Port    int    `yaml:"port"`
+		Cluster string `yaml:"cluster"`
+		Client  string `yaml:"client"`
+		Channel string `yaml:"channel"`
+	} `yaml:"nats-streaming"`
 	ZapConfig zap.Config
 }
 

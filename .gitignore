@@ -1,3 +1,4 @@
 pgdata/
+nats-datastore/
 .vscode/
 .DS_Store

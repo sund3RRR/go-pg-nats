@@ -30,7 +30,7 @@ func main() {
 	err = dbService.Connect(cfg)
 	if err != nil {
 		logger.Fatal(
-			"An error occured while trying to connect postgreSQL",
+			"An error occured while trying to connect to postgreSQL",
 			zap.Error(err),
 			zap.String("Host", cfg.Postgres.Host),
 			zap.Int("Port", cfg.Postgres.Port),

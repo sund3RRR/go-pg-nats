@@ -1,0 +1,6 @@
+nats-streaming:
+  host: localhost
+  port: 4222
+  cluster: test-cluster
+  client: sender-client
+  channel: order

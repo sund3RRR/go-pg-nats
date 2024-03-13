@@ -3,6 +3,7 @@ package main
 import (
 	"app/config"
 	"app/db"
+	"app/nats"
 	"fmt"
 	"log"
 	"sync"
@@ -26,7 +27,9 @@ func main() {
 
 	defer logger.Sync()
 
-	dbService := db.DatabaseService{}
+	dbService := db.DatabaseService{
+		Logger: logger,
+	}
 	err = dbService.Connect(cfg)
 	if err != nil {
 		logger.Fatal(
@@ -47,6 +50,11 @@ func main() {
 		logger.Fatal("An error occured while trying to prepare DB", zap.Error(err))
 	}
 
+	natsService := nats.NatsService{
+		Logger:    logger,
+		DBService: &dbService,
+	}
+
 	natsURL := fmt.Sprintf("nats://%s:%d", cfg.NatsStreaming.Host, cfg.NatsStreaming.Port)
 	sc, err := stan.Connect(cfg.NatsStreaming.Cluster, cfg.NatsStreaming.Client, stan.NatsURL(natsURL))
 	if err != nil {
@@ -56,9 +64,7 @@ func main() {
 
 	logger.Info("Successfully connected to NATS-streaming")
 
-	sub, err := sc.Subscribe(cfg.NatsStreaming.Channel, func(msg *stan.Msg) {
-		log.Printf("Received a message: %s\n", string(msg.Data))
-	})
+	sub, err := sc.Subscribe(cfg.NatsStreaming.Channel, natsService.HandleMessage)
 	if err != nil {
 		logger.Fatal("An error occured while trying to subscribe NATS channel", zap.Error(err))
 	}

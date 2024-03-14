@@ -112,7 +112,7 @@ func (dbService *DatabaseService) Connect(cfg *config.AppConfig) error {
 
 	return nil
 }
-func (dbService *DatabaseService) insertItems(items *[]order.Item) error {
+func (dbService *DatabaseService) insertItems(tx *sqlx.Tx, items *[]order.Item) error {
 	item_query := `INSERT INTO items (
 		order_uid,
 		chrt_id,
@@ -144,7 +144,7 @@ func (dbService *DatabaseService) insertItems(items *[]order.Item) error {
 
 	for _, item := range *items {
 		dbService.Logger.Info(fmt.Sprintf("Item order_uid: %s", item.OrderUID))
-		_, err := dbService.DB.NamedExec(item_query, item)
+		_, err := tx.NamedExec(item_query, item)
 		if err != nil {
 			return err
 		}
@@ -153,7 +153,7 @@ func (dbService *DatabaseService) insertItems(items *[]order.Item) error {
 	return nil
 }
 
-func (dbService *DatabaseService) insertPayment(payment *order.Payment) error {
+func (dbService *DatabaseService) insertPayment(tx *sqlx.Tx, payment *order.Payment) error {
 	payment_query := `INSERT INTO payment (
 		order_uid,
 		transaction,
@@ -182,11 +182,11 @@ func (dbService *DatabaseService) insertPayment(payment *order.Payment) error {
 	) ON CONFLICT DO NOTHING;`
 
 	dbService.Logger.Info(fmt.Sprintf("Payment order_uid: %s", payment.OrderUID))
-	_, err := dbService.DB.NamedExec(payment_query, payment)
+	_, err := tx.NamedExec(payment_query, payment)
 
 	return err
 }
-func (dbService *DatabaseService) insertDelivery(delivery *order.Delivery) error {
+func (dbService *DatabaseService) insertDelivery(tx *sqlx.Tx, delivery *order.Delivery) error {
 	delivery_query := `INSERT INTO delivery (
 		order_uid,
 		name,
@@ -209,12 +209,12 @@ func (dbService *DatabaseService) insertDelivery(delivery *order.Delivery) error
 	) ON CONFLICT DO NOTHING;`
 
 	dbService.Logger.Info(fmt.Sprintf("Delivery order_uid: %s", delivery.OrderUID))
-	_, err := dbService.DB.NamedExec(delivery_query, delivery)
+	_, err := tx.NamedExec(delivery_query, delivery)
 
 	return err
 }
 
-func (dbService *DatabaseService) insertOrder(order *order.Order) error {
+func (dbService *DatabaseService) insertOrder(tx *sqlx.Tx, order *order.Order) error {
 	orders_query := `INSERT INTO orders (
 		order_uid,
 		track_number,
@@ -242,41 +242,38 @@ func (dbService *DatabaseService) insertOrder(order *order.Order) error {
 		:oof_shard
 	) ON CONFLICT DO NOTHING;`
 
-	_, err := dbService.DB.NamedExec(orders_query, order)
+	_, err := tx.NamedExec(orders_query, order)
 	return err
 }
 
-func (dbService *DatabaseService) AddOrder(order *order.Order) {
-	err := dbService.insertOrder(order)
+func (dbService *DatabaseService) AddOrder(tx *sqlx.Tx, order *order.Order) error {
+	err := dbService.insertOrder(tx, order)
 	if err != nil {
-		dbService.Logger.Error("An error occured while trying to insert order", zap.Error(err))
-		return
+		dbService.Logger.Error("An error occured while trying to insert order")
+		return err
 	}
-
 	dbService.Logger.Info(fmt.Sprintf("Successfully insert order order_uid:%s", order.OrderUID))
 
-	err = dbService.insertItems(&order.Items)
+	err = dbService.insertItems(tx, &order.Items)
 	if err != nil {
-		dbService.Logger.Error("An error occured while trying to insert items", zap.Error(err))
-		return
+		dbService.Logger.Error("An error occured while trying to insert items")
+		return err
 	}
-
 	dbService.Logger.Info(fmt.Sprintf("Successfully insert items order_uid:%s", order.OrderUID))
 
-	err = dbService.insertDelivery(&order.Delivery)
+	err = dbService.insertDelivery(tx, &order.Delivery)
 	if err != nil {
-		dbService.Logger.Error("An error occured while trying to insert delivery", zap.Error(err))
-		return
+		dbService.Logger.Error("An error occured while trying to insert delivery")
+		return err
 	}
-
 	dbService.Logger.Info(fmt.Sprintf("Successfully insert delivery order_uid:%s", order.Delivery.OrderUID))
 
-	err = dbService.insertPayment(&order.Payment)
+	err = dbService.insertPayment(tx, &order.Payment)
 	if err != nil {
-		dbService.Logger.Error("An error occured while trying to insert payment", zap.Error(err))
+		dbService.Logger.Error("An error occured while trying to insert payment")
+		return err
 	}
-
 	dbService.Logger.Info(fmt.Sprintf("Successfully insert payment order_uid:%s", order.OrderUID))
 
-	dbService.Logger.Info(fmt.Sprintf("Successfully insert order order_uid:%s", order.OrderUID))
+	return nil
 }

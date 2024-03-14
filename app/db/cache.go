@@ -4,6 +4,7 @@ import (
 	"app/order"
 	"context"
 	"database/sql"
+	"time"
 
 	"github.com/jmoiron/sqlx"
 	"github.com/patrickmn/go-cache"
@@ -21,7 +22,7 @@ func (dbService *DatabaseService) LoadCache() {
 	for i := 0; i < len(orders); i++ {
 		order_uid := orders[i].OrderUID
 
-		tx, err := dbService.DB.BeginTxx(context.Background(), &sql.TxOptions{Isolation: sql.LevelRepeatableRead})
+		tx, err := dbService.DB.BeginTxx(context.Background(), &sql.TxOptions{Isolation: sql.LevelDefault})
 		if err != nil {
 			dbService.Logger.Error("Error trying to begin transaction", zap.Error(err))
 			return
@@ -85,8 +86,48 @@ func (dbService *DatabaseService) LoadCache() {
 	}
 }
 
-func (dbService *DatabaseService) DumpCache(order *order.Order) {
+func (dbService *DatabaseService) DumpCachedOrder(order_uid string) {
+	for {
+		tx, err := dbService.DB.BeginTxx(context.Background(), &sql.TxOptions{Isolation: sql.LevelDefault})
+		if err != nil {
+			dbService.Logger.Error("Error trying to begin transaction", zap.Error(err))
+			time.Sleep(time.Second)
+			dbService.Logger.Info("Retrying to dump cache")
+			continue
+		}
 
+		order_i, found := dbService.Cache.Get(order_uid)
+		if !found {
+			dbService.Logger.Error("Order not found in cache! Aborting cache dumping")
+			tx.Rollback()
+			return
+		}
+		order_obj := order_i.(order.Order)
+		err = dbService.AddOrder(tx, &order_obj)
+		if err != nil {
+			dbService.Logger.Error("Failed to dump cached order to database", zap.Error(err))
+			tx.Rollback()
+			time.Sleep(time.Second)
+			dbService.Logger.Info("Retrying to dump cache")
+			continue
+		}
+
+		err = tx.Commit()
+		if err != nil {
+			dbService.Logger.Error("Failed to commit transaction", zap.Error(err))
+			tx.Rollback()
+			time.Sleep(time.Second)
+			dbService.Logger.Info("Retrying to dump cache")
+			continue
+		}
+
+		dbService.Logger.Info(
+			"Successfully dumped cached order to database",
+			zap.String("order_uid", order_uid),
+		)
+
+		return
+	}
 }
 
 func (dbService *DatabaseService) selectPayment(tx *sqlx.Tx, order_uid string) (*order.Payment, error) {

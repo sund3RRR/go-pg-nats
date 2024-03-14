@@ -7,12 +7,14 @@ import (
 	"fmt"
 
 	"github.com/nats-io/stan.go"
+	"github.com/patrickmn/go-cache"
 	"go.uber.org/zap"
 )
 
 type NatsService struct {
 	Logger    *zap.Logger
 	DBService *db.DatabaseService
+	Cache     *cache.Cache
 }
 
 func (nats *NatsService) HandleMessage(msg *stan.Msg) {
@@ -31,5 +33,6 @@ func (nats *NatsService) HandleMessage(msg *stan.Msg) {
 		data.Items[i].OrderUID = data.OrderUID
 	}
 
-	nats.DBService.AddOrder(&data)
+	nats.Cache.Set(data.OrderUID, data, cache.NoExpiration)
+	go nats.DBService.DumpCachedOrder(data.OrderUID)
 }

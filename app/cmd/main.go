@@ -60,6 +60,7 @@ func main() {
 	natsService := nats.NatsService{
 		Logger:    logger,
 		DBService: &dbService,
+		Cache:     c,
 	}
 
 	natsURL := fmt.Sprintf("nats://%s:%d", cfg.NatsStreaming.Host, cfg.NatsStreaming.Port)

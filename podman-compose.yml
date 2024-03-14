@@ -23,26 +23,26 @@ services:
     volumes:
       - ./nats-datastore:/datastore
 
-  # app:
-  #   build:
-  #     context: app
-  #     dockerfile: Dockerfile
-  #   restart: "no"
-  #   entrypoint: /app/server
-  #   depends_on:
-  #     - postgres
-  #     - nats-streaming
-  #   volumes:
-  #     - ./app/config/config.yml:/app/config/config.yml
-  app-debug:
+  app:
     build:
-      context: ./app
-      dockerfile: Dockerfile.debug
+      context: app
+      dockerfile: Dockerfile
     restart: "no"
-    ports:
-      - "4000:4000"
+    entrypoint: /app/server
     depends_on:
       - postgres
       - nats-streaming
     volumes:
       - ./app/config/config.yml:/app/config/config.yml
+  # app-debug:
+  #   build:
+  #     context: ./app
+  #     dockerfile: Dockerfile.debug
+  #   restart: "no"
+  #   ports:
+  #     - "4000:4000"
+  #   depends_on:
+  #     - postgres
+  #     - nats-streaming
+  #   volumes:
+  #     - ./app/config/config.yml:/app/config/config.yml

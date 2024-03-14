@@ -7,12 +7,14 @@ import (
 
 	"github.com/jmoiron/sqlx"
 	_ "github.com/lib/pq"
+	"github.com/patrickmn/go-cache"
 	"go.uber.org/zap"
 )
 
 type DatabaseService struct {
 	Logger *zap.Logger
 	DB     *sqlx.DB
+	Cache  *cache.Cache
 }
 
 type Repo struct {

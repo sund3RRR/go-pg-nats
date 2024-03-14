@@ -10,6 +10,7 @@ import (
 
 	_ "github.com/lib/pq"
 	"github.com/nats-io/stan.go"
+	"github.com/patrickmn/go-cache"
 
 	"go.uber.org/zap"
 )
@@ -27,9 +28,13 @@ func main() {
 
 	defer logger.Sync()
 
+	c := cache.New(cache.NoExpiration, cache.NoExpiration)
+
 	dbService := db.DatabaseService{
 		Logger: logger,
+		Cache:  c,
 	}
+
 	err = dbService.Connect(cfg)
 	if err != nil {
 		logger.Fatal(
@@ -49,6 +54,8 @@ func main() {
 	if err != nil {
 		logger.Fatal("An error occured while trying to prepare DB", zap.Error(err))
 	}
+
+	dbService.LoadCache()
 
 	natsService := nats.NatsService{
 		Logger:    logger,

@@ -22,7 +22,7 @@ func (dbService *DatabaseService) LoadCache() {
 	for i := 0; i < len(orders); i++ {
 		order_uid := orders[i].OrderUID
 
-		tx, err := dbService.DB.BeginTxx(context.Background(), &sql.TxOptions{Isolation: sql.LevelDefault})
+		tx, err := dbService.DB.BeginTxx(context.Background(), &sql.TxOptions{Isolation: sql.LevelRepeatableRead})
 		if err != nil {
 			dbService.Logger.Error("Error trying to begin transaction", zap.Error(err))
 			return

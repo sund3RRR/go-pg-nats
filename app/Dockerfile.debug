@@ -6,9 +6,10 @@ WORKDIR /build
 
 RUN set -eux; \
     CGO_ENABLED=0 go install -ldflags "-s -w -extldflags '-static'" github.com/go-delve/delve/cmd/dlv@latest; \
-    CGO_ENABLED=0 go build -o /build/server ./cmd; \
+    CGO_ENABLED=0 go build -o /build/go-pg-nats ./cmd; \
     mkdir -p /app/config; \
-    cp /build/server /app/server
+    cp /build/go-pg-nats /app/go-pg-nats
+    cp /build/server/static /app/static
 
 WORKDIR /app
 
@@ -20,12 +21,14 @@ RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
 
 # Set up user for server
 RUN set -eux; \
-    chmod +x server; \
+    chmod +x go-pg-nats; \
     groupadd -r serveruser; \
     useradd -r -g serveruser -d /app -s /bin/bash serveruser; \
     chown -R serveruser:serveruser /app;
 
-EXPOSE 4000
 USER serveruser
 
-CMD [ "/go/bin/dlv", "--listen=:4000", "--headless=true", "--log=true", "--accept-multiclient", "--api-version=2", "exec", "/app/server" ]
+EXPOSE 4000
+EXPOSE 8080
+
+CMD [ "/go/bin/dlv", "--listen=:4000", "--headless=true", "--log=true", "--accept-multiclient", "--api-version=2", "exec", "/app/go-pg-nats" ]

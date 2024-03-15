@@ -23,6 +23,9 @@ type AppConfig struct {
 		Client  string `yaml:"client"`
 		Channel string `yaml:"channel"`
 	} `yaml:"nats-streaming"`
+	Server struct {
+		Port int `yaml:"port"`
+	}
 	ZapConfig zap.Config
 }
 

@@ -28,7 +28,9 @@ services:
       context: app
       dockerfile: Dockerfile
     restart: "no"
-    entrypoint: /app/server
+    entrypoint: /app/go-pg-nats
+    ports:
+      - "8080:8080"
     depends_on:
       - postgres
       - nats-streaming
@@ -41,6 +43,7 @@ services:
   #   restart: "no"
   #   ports:
   #     - "4000:4000"
+  #     - "8080:8080"
   #   depends_on:
   #     - postgres
   #     - nats-streaming

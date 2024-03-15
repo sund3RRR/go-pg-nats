@@ -4,6 +4,7 @@ import (
 	"app/config"
 	"app/db"
 	"app/nats"
+	"app/server"
 	"fmt"
 	"log"
 	"sync"
@@ -80,25 +81,18 @@ func main() {
 
 	logger.Info(fmt.Sprintf("Successfully subscribed to NATS-streaming channel %s", cfg.NatsStreaming.Channel))
 
-	logger.Info("Starting server...")
+	httpServer := server.Server{
+		Cache:  c,
+		Logger: logger,
+	}
 
 	var wg sync.WaitGroup
-	wg.Add(3)
+	wg.Add(1)
 
-	// botService := bot.BotService{
-	// 	DatabaseService: &dbService,
-	// 	Logger:          logger,
-	// }
-
-	// go func() {
-	// 	defer wg.Done()
-	// 	botService.StartBot()
-	// }()
-
-	// go func() {
-	// 	defer wg.Done()
-	// 	botService.StartRepoSender()
-	// }()
+	go func() {
+		defer wg.Done()
+		httpServer.StartServer(cfg)
+	}()
 
 	wg.Wait()
 }

@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Order Information</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet"
+    integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
+</head>
+
+<body>
+  <div class="container">
+    <div class="row justify-content-center mt-5">
+      <div class="col-md-6">
+          <form id="orderForm">
+              <div class="mb-3">
+                <label for="orderUid" class="form-label">Enter your order uid</label>
+                <input type="text" class="form-control" id="orderUid" name="orderUid" placeholder="Order UID">
+              </div>
+              <button type="submit" class="btn btn-primary">Get Order Information</button>
+              <label id="wrongOrderUid" for="orderUid" style="display: none;"
+                class="mb-3 form-label">Wrong order uid, try again</label>
+            </form>
+      </div>
+    </div>
+
+    <div class="row justify-content-center mt-5" id="orderInfoSection" style="display: none;">
+      <div class="col-md-6" style="margin-left: auto;margin-right: auto ">
+        <div class="card">
+          <div class="card-body" id="orderInfo">
+            <!-- Order information will be displayed here -->
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js"
+    integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM"
+    crossorigin="anonymous">
+  </script>
+  <script>
+    document.getElementById('orderForm').addEventListener('submit', function (event) {
+      event.preventDefault();
+      const orderUid = document.getElementById('orderUid').value;
+      fetchOrderInformation(orderUid);
+    });
+
+    async function fetchOrderInformation(orderUid) {
+      var url = 'http://localhost:8080/get_order?order_uid=' + orderUid
+
+      const response = await fetch(url, { method: 'GET' })
+      if(response.ok) {
+          const wrongOrderUidSection = document.getElementById('wrongOrderUid');
+          wrongOrderUidSection.style.display = 'none';
+          const json_response = await response.json()
+          displayOrderInformation(json_response);
+      }
+      else {
+        const orderInfoSection = document.getElementById('orderInfoSection');
+        const wrongOrderUidSection = document.getElementById('wrongOrderUid');
+        wrongOrderUidSection.style.display = 'block';
+        orderInfoSection.style.display = 'none';
+        console.log(response.status)
+        console.log(response.body)
+      }
+    }
+
+    function displayOrderInformation(order) {
+      const orderInfoSection = document.getElementById('orderInfoSection');
+      const orderInfo = document.getElementById('orderInfo');
+      orderInfo.innerHTML = `
+        <h4 class="card-title">Order Information</h4>
+        <p class="card-text"><strong>Order UID:</strong> ${order.order_uid}</p>
+        <p class="card-text"><strong>Track Number:</strong> ${order.track_number}</p>
+        <p class="card-text"><strong>Customer Name:</strong> ${order.delivery.name}</p>
+        <p class="card-text"><strong>Phone:</strong> ${order.delivery.phone}</p>
+        <p class="card-text"><strong>Address:</strong> ${order.delivery.address}, ${order.delivery.city}, ${order.delivery.region}, ${order.delivery.zip}</p>
+        <p class="card-text"><strong>Email:</strong> ${order.delivery.email}</p>
+        <p class="card-text"><strong>Payment Amount:</strong> ${order.payment.amount} ${order.payment.currency}</p>
+        <p class="card-text"><strong>Delivery Cost:</strong> ${order.payment.delivery_cost} ${order.payment.currency}</p>
+        <p class="card-text"><strong>Goods Total:</strong> ${order.payment.goods_total} ${order.payment.currency}</p>
+        <p class="card-text"><strong>Items:</strong></p>
+        <ul class="list-group list-group-flush">
+          <li class="list-group-item">${order.items[0].name} - ${order.items[0].price} ${order.payment.currency}</li>
+        </ul>
+      `;
+      orderInfoSection.style.display = 'block';
+    }
+  </script>
+</body>
+</html>

@@ -9,4 +9,6 @@ nats-streaming:
   port: 4222
   cluster: test-cluster
   client: server-client
-  channel: order 
+  channel: order
+server:
+  port: 8080

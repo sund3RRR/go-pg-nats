@@ -27,8 +27,7 @@ type Repo struct {
 	IsRelease bool   `db:"is_release"`
 }
 
-var DBInstance *sqlx.DB
-
+// The function create all required tables if not exists
 func (dbService *DatabaseService) PrepareDb() error {
 	_, err := dbService.DB.Exec(
 		`
@@ -140,7 +139,7 @@ func (dbService *DatabaseService) insertItems(tx *sqlx.Tx, items *[]order.Item) 
 		:nm_id,
 		:brand,
 		:status
-	) ON CONFLICT DO NOTHING;`
+	);`
 
 	for _, item := range *items {
 		dbService.Logger.Info(fmt.Sprintf("Item order_uid: %s", item.OrderUID))
@@ -179,7 +178,7 @@ func (dbService *DatabaseService) insertPayment(tx *sqlx.Tx, payment *order.Paym
 		:delivery_cost,
 		:goods_total,
 		:custom_fee
-	) ON CONFLICT DO NOTHING;`
+	);`
 
 	dbService.Logger.Info(fmt.Sprintf("Payment order_uid: %s", payment.OrderUID))
 	_, err := tx.NamedExec(payment_query, payment)
@@ -206,7 +205,7 @@ func (dbService *DatabaseService) insertDelivery(tx *sqlx.Tx, delivery *order.De
 		:address,
 		:region,
 		:email
-	) ON CONFLICT DO NOTHING;`
+	);`
 
 	dbService.Logger.Info(fmt.Sprintf("Delivery order_uid: %s", delivery.OrderUID))
 	_, err := tx.NamedExec(delivery_query, delivery)
@@ -240,7 +239,7 @@ func (dbService *DatabaseService) insertOrder(tx *sqlx.Tx, order *order.Order) e
 		:sm_id,
 		:date_created,
 		:oof_shard
-	) ON CONFLICT DO NOTHING;`
+	);`
 
 	_, err := tx.NamedExec(orders_query, order)
 	return err

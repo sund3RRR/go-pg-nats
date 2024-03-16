@@ -1,19 +1,19 @@
 {
-  "order_uid": "b583feb7b2684b6test",
+  "order_uid": "b583feb7b5684b6test",
   "track_number": "WBILMTESTTRACK",
   "entry": "WBIL",
   "delivery": {
-    "name": "Test Tesstov",
+    "name": "Ivan Ivanov",
     "phone": "+9720000000",
     "zip": "2639809",
-    "city": "Kiryat Mozkin",
+    "city": "Moscow",
     "address": "Ploshad Mira 15",
     "region": "Kraiot",
     "email": "test@gmail.com"
   },
   "payment": {
-    "transaction": "b563feb7b2684b6test",
-    "request_id": "2",
+    "transaction": "b563feb7b2684b6t8st",
+    "request_id": "",
     "currency": "USD",
     "provider": "wbpay",
     "amount": 1817,
@@ -21,7 +21,7 @@
     "bank": "alpha",
     "delivery_cost": 1500,
     "goods_total": 317,
-    "custom_fee": 1
+    "custom_fee": 0
   },
   "items": [
     {
@@ -39,11 +39,4 @@
     }
   ],
   "locale": "en",
-  "internal_signature": "f",
-  "customer_id": "test",
-  "delivery_service": "meest",
-  "shardkey": "9",
-  "sm_id": 99,
-  "date_created": "2021-11-26T06:22:19Z",
-  "oof_shard": "1"
-}
+  "internal_signature":

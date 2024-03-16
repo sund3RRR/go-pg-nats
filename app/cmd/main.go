@@ -9,6 +9,7 @@ import (
 	"log"
 	"sync"
 
+	"github.com/go-playground/validator/v10"
 	_ "github.com/lib/pq"
 	"github.com/nats-io/stan.go"
 	"github.com/patrickmn/go-cache"
@@ -17,20 +18,23 @@ import (
 )
 
 func main() {
+	// setup zap.Config
 	cfg, err := config.NewConfig("config/config.yml")
 	if err != nil {
 		log.Fatal(err)
 	}
 
+	// setup zap.Logger
 	logger, err := cfg.ZapConfig.Build()
 	if err != nil {
 		log.Fatal(err)
 	}
-
 	defer logger.Sync()
 
+	// create go-cache
 	c := cache.New(cache.NoExpiration, cache.NoExpiration)
 
+	// setup postgres db service
 	dbService := db.DatabaseService{
 		Logger: logger,
 		Cache:  c,
@@ -56,12 +60,15 @@ func main() {
 		logger.Fatal("An error occured while trying to prepare DB", zap.Error(err))
 	}
 
+	// after successfull db setup, load all data from db to the im-memory cache
 	dbService.LoadCache()
 
+	// setup nats-streaming service
 	natsService := nats.NatsService{
 		Logger:    logger,
 		DBService: &dbService,
 		Cache:     c,
+		Validator: validator.New(),
 	}
 
 	natsURL := fmt.Sprintf("nats://%s:%d", cfg.NatsStreaming.Host, cfg.NatsStreaming.Port)
@@ -81,11 +88,13 @@ func main() {
 
 	logger.Info(fmt.Sprintf("Successfully subscribed to NATS-streaming channel %s", cfg.NatsStreaming.Channel))
 
+	// setup http server
 	httpServer := server.Server{
 		Cache:  c,
 		Logger: logger,
 	}
 
+	// create wait group with 1 goroutine
 	var wg sync.WaitGroup
 	wg.Add(1)
 

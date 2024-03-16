@@ -4,6 +4,7 @@ import (
 	"app/order"
 	"context"
 	"database/sql"
+	"strings"
 	"time"
 
 	"github.com/jmoiron/sqlx"
@@ -11,6 +12,12 @@ import (
 	"go.uber.org/zap"
 )
 
+// Load all database data to the in-memory cache.
+//
+// go-cache is using as an implementation of thread-safe in-memory cache.
+//
+// Retrieving all child tables are wrapped in an atomic transtaction with
+// RepeatableRead isolation level.
 func (dbService *DatabaseService) LoadCache() {
 	var orders []order.Order
 
@@ -36,7 +43,7 @@ func (dbService *DatabaseService) LoadCache() {
 					zap.String("order_uid", order_uid),
 				)
 			} else {
-				dbService.Logger.Error("An error occured trying to select payment", zap.Error(err))
+				dbService.Logger.Error("An error occured while trying to select payment", zap.Error(err))
 			}
 			_ = tx.Rollback()
 			return
@@ -50,7 +57,7 @@ func (dbService *DatabaseService) LoadCache() {
 					zap.String("order_uid", order_uid),
 				)
 			} else {
-				dbService.Logger.Error("An error occured trying to select delivery", zap.Error(err))
+				dbService.Logger.Error("An error occured while trying to select delivery", zap.Error(err))
 			}
 			_ = tx.Rollback()
 			return
@@ -64,7 +71,7 @@ func (dbService *DatabaseService) LoadCache() {
 					zap.String("order_uid", order_uid),
 				)
 			} else {
-				dbService.Logger.Error("An error occured trying to select items", zap.Error(err))
+				dbService.Logger.Error("An error occured while trying to select items", zap.Error(err))
 			}
 			_ = tx.Rollback()
 			return
@@ -86,6 +93,12 @@ func (dbService *DatabaseService) LoadCache() {
 	}
 }
 
+// Dump order from in-memory cache to the db.
+//
+// This function make a transaction with ReadCommited level of isolation.
+//
+// The function will restart the transaction if errors occur
+// at any stage of the transaction except dublicate primary key value.
 func (dbService *DatabaseService) DumpCachedOrder(order_uid string) {
 	for {
 		tx, err := dbService.DB.BeginTxx(context.Background(), &sql.TxOptions{Isolation: sql.LevelDefault})
@@ -107,6 +120,10 @@ func (dbService *DatabaseService) DumpCachedOrder(order_uid string) {
 		if err != nil {
 			dbService.Logger.Error("Failed to dump cached order to database", zap.Error(err))
 			tx.Rollback()
+			if strings.Contains(err.Error(), "duplicate key value violates unique constraint") {
+				dbService.Logger.Info("Aborting transaction due to duplicate primary key value")
+				return
+			}
 			time.Sleep(time.Second)
 			dbService.Logger.Info("Retrying to dump cache")
 			continue

@@ -37,9 +37,11 @@ func NewConfig(filename string) (*AppConfig, error) {
 		return &config, err
 	}
 
+	// build config with debug lebel logging
 	zapConfig := zap.NewDevelopmentConfig()
 	zapConfig.Level = zap.NewAtomicLevelAt(zap.DebugLevel)
 
+	// set colors and encoding gor logger
 	zapConfig.EncoderConfig.EncodeLevel = zapcore.CapitalColorLevelEncoder
 	zapConfig.EncoderConfig.EncodeTime = zapcore.ISO8601TimeEncoder
 
